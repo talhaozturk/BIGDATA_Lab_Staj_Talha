@@ -77,7 +77,7 @@ classifier_MNB = MultinomialNB().fit(X_train, y_train)
 predicted_multinomialNB = classifier_MNB.predict(X_test)
 #print(np.mean(predicted_multinomialNB == y_test))
 
-acc = accuracy_score(y_test, predicted_multinomialNB)
+acc = accuracy_score(y_test, predicted_multinomialNB, normalize=False) ###10 avg mi en iyisi mi
 print("accuracy: ", round(acc,3))
 
 print(metrics.classification_report(y_test, predicted_multinomialNB, target_names=dataset.target_names))
