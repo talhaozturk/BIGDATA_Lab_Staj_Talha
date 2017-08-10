@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import nltk
 import numpy as np
 import sklearn.datasets
+import math
+import operator
 
 from io import StringIO
 
@@ -26,6 +28,11 @@ class LemmaTokenizer(object):
 
 
 # stemmer = SnowballStemmer("english")
+
+def combination(n,r):
+    if r > n: return 1
+    f = math.factorial
+    return f(n) / f(r) / f(n-r)
 
 
 def stem_tokens(tokens, stemmer):
@@ -70,13 +77,14 @@ def pdf_to_dataset(path,x):
 
     data = []
     file_names = np.array([])
+    meaning = {}
 
     for subdir, dirs, files in os.walk(path):
         for file in files:
             file_path = subdir + os.path.sep + file
             print(file_path)
             text = pdf_to_text(file_path)
-            text = ''.join(ch for ch in text if ch not in string.punctuation).lower().replace('\n', '').replace("higher order","higherorder")
+            text = ''.join(ch for ch in text if ch not in string.punctuation).lower().replace('\n', ' ').replace("higher order","higherorder")
             data.append(text)
             file_names = np.append(file_names, file)
             #print("sunu okudum: %s" % (file_names))
@@ -86,6 +94,27 @@ def pdf_to_dataset(path,x):
     stop_words = ENGLISH_STOP_WORDS.union(["al","et","set",'±',"document","term","used","based","?","altınel","7","62","2017","5","b","table","10","20","30",
                                            "50","1","2","s","0","international","conference"])
 
+    tf_vectorizer2 = CountVectorizer(tokenizer=LemmaTokenizer(), stop_words=stop_words, lowercase=True)  # tf
+    X_data_meaning_tf_corpus = tf_vectorizer2.fit_transform(dataset.data)
+    freqs_meaning_tf_corpus = {word: X_data_meaning_tf_corpus.getcol(idx).sum() for word, idx in tf_vectorizer2.vocabulary_.items()} # m
+    termfrequency_corpus = sum(freqs_meaning_tf_corpus.values()) # L
+    for data in dataset.data:
+        y = [data]
+        X_data_meaning_tf_doc = tf_vectorizer2.fit_transform(y)
+        freqs_meaning_tf_doc = {word: X_data_meaning_tf_doc.getcol(idx).sum() for word, idx in tf_vectorizer2.vocabulary_.items()} # k
+        termfrequency_doc = sum(freqs_meaning_tf_doc.values()) # B
+        N = termfrequency_corpus/termfrequency_doc
+        for word in freqs_meaning_tf_doc.keys():
+            k = freqs_meaning_tf_doc[word]
+            m = freqs_meaning_tf_corpus.get(word,0)
+            meaning_score = (-1/m) * (math.log10(combination(k,m))) - ((m-1) * math.log10(N))
+            meaning[word] = meaning_score
+
+    sorted_freqs_meaning = sorted(meaning.items(), key=operator.itemgetter(1))
+    sorted_freqs_meaning = sorted(meaning.items(), key = lambda x: x[1])[:x]
+    print(sorted_freqs_meaning)
+
+    exit()
     # term frequency
     tf_vectorizer = CountVectorizer(tokenizer=LemmaTokenizer(), stop_words=stop_words, lowercase=True, ngram_range=(2,2))  # tf
     X_data_tf = tf_vectorizer.fit_transform(dataset.data)
@@ -128,7 +157,7 @@ def pdf_to_dataset(path,x):
     return
 
 
-pdf_to_dataset("/media/ayneen/HDD/Users/Talha/PycharmProjects/BIGDATA_Lab_Staj_Talha/PDFs",25)
+pdf_to_dataset("/media/ayneen/HDD/Users/Talha/PycharmProjects/BIGDATA_Lab_Staj_Talha/PDFs/_2017",10)
 """
 # JVM başlat
 # Aşağıdaki adresleri java sürümünüze ve jar dosyasının bulunduğu klasöre göre değiştirin
@@ -153,4 +182,12 @@ for kelime in kelimeler:
             print("{} ÇÖZÜMLENEMEDİ".format(kelime))
 #JVM kapat
 jpype.shutdownJVM()
+"""
+
+"""
+tf_meaning_vectorizer = CountVectorizer(vocabulary=["classiﬁcation"], tokenizer=LemmaTokenizer(), stop_words=stop_words, lowercase=True)
+X_data_meaning_tf = tf_meaning_vectorizer.fit_transform(dataset.data)
+freqs_meaning_tf = [(word, X_data_meaning_tf.getcol(idx).sum()) for word, idx in tf_meaning_vectorizer.vocabulary_.items()]
+sorted_freqs_meaning_tf = sorted(freqs_meaning_tf, key = lambda x: -x[-1])[:x]
+print(sorted_freqs_meaning_tf)
 """
