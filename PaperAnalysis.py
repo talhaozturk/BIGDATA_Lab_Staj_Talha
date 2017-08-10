@@ -96,17 +96,17 @@ def pdf_to_dataset(path,x):
 
     tf_vectorizer2 = CountVectorizer(tokenizer=LemmaTokenizer(), stop_words=stop_words, lowercase=True)  # tf
     X_data_meaning_tf_corpus = tf_vectorizer2.fit_transform(dataset.data)
-    freqs_meaning_tf_corpus = {word: X_data_meaning_tf_corpus.getcol(idx).sum() for word, idx in tf_vectorizer2.vocabulary_.items()} # m
+    freqs_meaning_tf_corpus = {word: X_data_meaning_tf_corpus.getcol(idx).sum() for word, idx in tf_vectorizer2.vocabulary_.items()} # k
     termfrequency_corpus = sum(freqs_meaning_tf_corpus.values()) # L
     for data in dataset.data:
         y = [data]
         X_data_meaning_tf_doc = tf_vectorizer2.fit_transform(y)
-        freqs_meaning_tf_doc = {word: X_data_meaning_tf_doc.getcol(idx).sum() for word, idx in tf_vectorizer2.vocabulary_.items()} # k
+        freqs_meaning_tf_doc = {word: X_data_meaning_tf_doc.getcol(idx).sum() for word, idx in tf_vectorizer2.vocabulary_.items()} # m
         termfrequency_doc = sum(freqs_meaning_tf_doc.values()) # B
         N = termfrequency_corpus/termfrequency_doc
         for word in freqs_meaning_tf_doc.keys():
-            k = freqs_meaning_tf_doc[word]
-            m = freqs_meaning_tf_corpus.get(word,0)
+            m = freqs_meaning_tf_doc[word]
+            k = freqs_meaning_tf_corpus.get(word,0)
             meaning_score = (-1/m) * (math.log10(combination(k,m))) - ((m-1) * math.log10(N))
             meaning[word] = meaning_score
 
